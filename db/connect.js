@@ -1,39 +1,32 @@
 const dotenv = require("dotenv");
-const { MongoClient } = require("mongodb");
 dotenv.config();
-const express = require("express");
+const MongoClient = require("mongodb").MongoClient;
 
-const app = express();
-const port = process.env.PORT || 3000;
+let _db;
 
-// or as an es module:
-// import { MongoClient } from 'mongodb'
-
-// Connection URL
-const uri =
-  "mongodb+srv://andresfm:Brazil1234@week2.9qkzfpi.mongodb.net/?retryWrites=true&w=majority";
-const client = new MongoClient(uri);
-
-// Database Name
-const dbName = "contacts";
-
-async function main() {
-  // Use connect method to connect to the server
-  await client.connect();
-  console.log("Connected successfully to server");
-  const db = client.db(dbName);
-  const collection = db.collection("contacts");
-
-  // the following code examples can be pasted here...
-
-  return "done.";
-}
-
-main()
-  .then(function () {
-    app.listen(port, () => {
-      console.log(`Running on port ${port}`);
+const initDb = (callback) => {
+  if (_db) {
+    console.log("Db is already initialized!");
+    return callback(null, _db);
+  }
+  MongoClient.connect(process.env.MONGODB_URI)
+    .then((client) => {
+      _db = client;
+      callback(null, _db);
+    })
+    .catch((err) => {
+      callback(err);
     });
-  })
-  .catch(console.error)
-  .finally(() => client.close());
+};
+
+const getDb = () => {
+  if (!_db) {
+    throw Error("Db not initialized");
+  }
+  return _db;
+};
+
+module.exports = {
+  initDb,
+  getDb,
+};
